@@ -110,3 +110,131 @@ aside h2 { margin-bottom: 8px; }
 .trust li { display: flex; align-items: center; gap: 8px; }
 .trust li::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--ok); }
 .error { margin: 12px 0 0; padding: 12px; border-radius: 8px; background: var(--bad-soft); color: var(--bad); font-size: 14px; }
+
+
+
+/* Auto Pay toggle */
+.autopay-toggle {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.switch {
+  width: 40px;
+  height: 21px;
+  background: #ccc;
+  border-radius: 20px;
+  padding: 2px;
+  transition: background 0.2s;
+}
+
+.switch.on {
+  background: #0070ba;
+}
+
+.switch span {
+  display: block;
+  width: 17px;
+  height: 17px;
+  background: white;
+  border-radius: 50%;
+  transition: transform 0.2s;
+}
+
+.switch.on span {
+  transform: translateX(19px);
+}
+
+/* Loading */
+.loading-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 65px 20px;
+  gap: 12px;
+}
+
+.spinner {
+  width: 42px;
+  height: 42px;
+  border: 4px solid #e5e7eb;
+  border-top-color: #0070ba;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loading-section h3 {
+  margin: 8px 0 0;
+}
+
+.loading-section p {
+  color: #888;
+  max-width: 420px;
+  font-size: 14px;
+}
+
+/* Ranking reasons */
+.ranking-reasons {
+  margin-top: 16px;
+  padding: 12px;
+  background: rgba(128, 128, 128, 0.07);
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+.ranking-reasons ul {
+  padding-left: 18px;
+  margin-bottom: 0;
+}
+
+.ranking-reasons li {
+  margin-top: 6px;
+  color: #888;
+}
+
+/* Error */
+.error-box {
+  padding: 16px;
+  margin-top: 20px;
+  border: 1px solid #dc2626;
+  border-radius: 10px;
+  color: #dc2626;
+}
+
+.error-box button {
+  cursor: pointer;
+}
+
+/* Disabled state */
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@media (max-width: 650px) {
+  .command {
+    flex-wrap: wrap;
+  }
+
+  .command input {
+    width: 100%;
+  }
+
+  .autopay-toggle {
+    margin-left: 0;
+  }
+}

@@ -1,4 +1,36 @@
-import {prisma} from "./prisma";
+import { prisma } from "./prisma";
+
+export async function createMerchant({
+  userId,
+  paypalMerchantId,
+  name,
+  email,
+  domain,
+}: {
+  userId: string;
+  paypalMerchantId: string;
+  name: string;
+  email: string;
+  domain: string;
+}) {
+  return await prisma.merchant.create({
+    data: {
+      userId,
+      paypalMerchantId,
+      name,
+      email,
+      domain,
+      // Other fields like dnsToken, emailCodeHash are left empty/null
+      // and status defaults to PENDING_DNS
+    },
+  });
+}
+
+export async function getMerchantByEmail(email: string) {
+  return await prisma.merchant.findUnique({
+    where: { email },
+  });
+}
 
 export async function fetchMerchantsToRefresh() {
     try{
@@ -38,6 +70,3 @@ export async function fetchMerchantById(merchantId: string) {
         throw error;
     }
 }
-
-//TODO
-// export async function createMerchant()

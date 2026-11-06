@@ -1,6 +1,6 @@
 import {prisma} from './prisma'
 
-const AI_URL='http://localhost:8000'
+const AI_URL=process.env.NEXT_PUBLIC_AI_BASE_URL
 
 export async function getProductById(productId: string){
 
