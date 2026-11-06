@@ -1,11 +1,10 @@
-
-from langchain_huggingface import HuggingFaceEmbeddings
+import os
+import numpy as np
+from huggingface_hub import InferenceClient
 from pydantic import BaseModel, Field
 
-# Load once when the service starts.
-embedding_model = HuggingFaceEmbeddings(
-    model_name="sentence-transformers/all-MiniLM-L6-v2"
-)
+_client = InferenceClient(token=os.environ["HF_TOKEN"], timeout=30)
+MODEL_ID = "sentence-transformers/all-MiniLM-L6-v2"
 
 
 class ProductEmbeddingRequest(BaseModel):
@@ -21,18 +20,20 @@ class ProductEmbeddingResponse(BaseModel):
     dimensions: int
 
 
-
 def generate_embedding(text: str) -> list[float]:
-    """Pure embedding function reusable anywhere (tools, endpoints, scripts)."""
-    vectors = embedding_model.embed_documents([text])
-    return vectors[0]
+    out = _client.feature_extraction(text, model=MODEL_ID)
+    return np.asarray(out, dtype=float).reshape(-1).tolist()
+
+
+def generate_embeddings(texts: list[str]) -> list[list[float]]:
+    """Batch version: one API call for many products (use this when seeding)."""
+    out = _client.feature_extraction(texts, model=MODEL_ID)
+    return np.asarray(out, dtype=float).tolist()
+
 
 def build_product_search_text(name: str, description: str, category: str | None = None) -> str:
-    """Standardizes product formatting for consistent vector search."""
     return (
         f"Product: {name}. "
         f"Description: {description}. "
         f"Category: {category or 'Not specified'}."
     )
-
-
