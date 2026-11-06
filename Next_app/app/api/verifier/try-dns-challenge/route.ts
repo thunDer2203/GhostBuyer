@@ -29,7 +29,7 @@ export async function POST(req: Request) {
                 },
                 data:{
                     status:"DNS_VERIFIED",
-                    verfiedAt:new Date(),
+                    verifiedAt:new Date(),
                 },
             })
             return NextResponse.json({message:"Domain verified successfully, Please proceed to verify email"});
