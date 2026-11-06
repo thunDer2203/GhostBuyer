@@ -1,0 +1,137 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  extensions = [vector]
+}
+
+model Merchant {
+  id               String   @id @default(cuid())
+  userId           String   @unique                    // the logged-in account that owns this record
+  paypalMerchantId String   @unique
+  name             String
+  email            String   @unique
+  domain           String   @unique
+  status           MerchantStatus @default(PENDING_DNS)
+  dnsToken         String?
+  dnsExpiresAt     DateTime?
+  emailCodeHash    String?
+  rating Int?
+  emailCodeExpiresAt DateTime?
+  emailAttempts    Int      @default(0)
+  verifiedAt       DateTime?
+  lastRatingDate  DateTime?
+  productId        Product[]
+  order            Order[]
+  createdAt        DateTime @default(now())
+}
+enum MerchantStatus { 
+ PENDING_DNS
+ DNS_VERIFIED 
+ VERIFIED 
+ EXPIRED 
+ }
+
+
+model Order{
+
+  id  String @id @default(cuid())
+  customerId   String
+  createdAt  DateTime @default(now())
+  merchantId  String
+  orderStatus  OrderStatus @default(PENDING)
+  paymentStatus PaymentStatus  @default(PENDING)
+  productId String
+  quantity Int
+
+  customer   Customer @relation(fields: [customerId], references: [id])
+  merchant   Merchant @relation(fields: [merchantId], references: [id])
+  product Product @relation(fields:[productId],references:[id])
+}
+
+enum OrderStatus{
+  PENDING
+ DELIVERED
+ CANCELLED
+ RETURNED
+ }
+
+
+enum PaymentStatus{
+  PENDING
+SUCCESSFUL
+FAILED
+}
+
+
+model Customer{
+  id   String @id @default(cuid())
+  createdAt  DateTime @default(now())
+  name String?
+  email String?
+  orders Order[]
+  review Review[]
+}
+
+
+model Product {
+  id             String   @id @default(cuid())
+  name           String
+  description    String
+  keywords       String
+  quantity       String
+  price          Int
+  embeddedString Unsupported("vector(384)")?
+  merchantId     String
+
+  // Product categorization
+  category       String   @default("unknown")
+
+  // Product scoring fields
+  trustScore     Float?
+  productScore   Float?
+  priceValue     Float?
+  scamHits       Int      @default(0)
+
+  // Incremental scoring metadata
+  contentHash    String?
+  scoreVersion   Int?
+  scoredAt       DateTime?
+
+  orders         Order[]
+  review         Review[]
+  merchant       Merchant @relation(fields: [merchantId], references: [id])
+
+  // Assessment audit record
+  assessment     ProductAssessment?
+}
+
+model ProductAssessment {
+  productId      String   @id
+  assessment     Json
+  scoreBreakdown Json
+  computedAt     DateTime @default(now())
+
+  product        Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+
+model Review{
+  id String @id @default(cuid())
+  rating Int
+  description String
+  productId  String
+  customerId String
+  product Product @relation(fields:[productId],references:[id])
+  customer Customer @relation(fields:[customerId],references:[id])
+}
