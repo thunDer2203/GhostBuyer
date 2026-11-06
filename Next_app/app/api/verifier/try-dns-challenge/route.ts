@@ -28,7 +28,7 @@ export async function POST(req: Request) {
                     userId:userId,
                 },
                 data:{
-                    stats:"DNS_VERIFIED",
+                    status:"DNS_VERIFIED",
                     verfiedAt:new Date(),
                 },
             })
