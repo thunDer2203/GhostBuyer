@@ -8,7 +8,7 @@ export async function POST(req: Request) {
     }
 
 
-    const response = await fetch(`${process.env.NEXT_PUBLIC_AI_BASE_URL}/ai/recommend`, {
+    const response = await fetch(`${process.env.AI_BASE_URL}/ai/recommend`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
