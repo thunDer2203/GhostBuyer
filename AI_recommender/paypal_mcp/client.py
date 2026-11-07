@@ -1,3 +1,4 @@
+import json
 import os
 import time
 import requests
@@ -54,51 +55,56 @@ class PayPalClient:
 class CreateOrderTool(Tool):
     name = "create_order"
     description = (
-        "Creates a new PayPal checkout order. Use when a customer wants to purchase "
-        "a product. Creating an order does NOT charge the customer; they must approve "
-        "it first. Returns the order ID and approval URL."
+        "Creates ONE PayPal checkout order for a single product. Creating an order does "
+        "NOT charge the buyer; they must approve it on PayPal first. Returns a JSON string: "
+        'on success {"paypal_order_id": "...", "approval_url": "..."}, '
+        'on failure {"status": "payment_failed", "message": "..."}.'
     )
     inputs = {
-        "purchase_units": {
-            "type": "array",
-            "description": "List of purchase units, e.g. "
-            "[{'amount': {'currency_code': 'USD', 'value': '25.00'}}]",
-        },
-        "intent": {
-            "type": "string",
-            "description": "Always 'CAPTURE'.",
-            "nullable": True,
-        },
+        "product_id": {"type": "string", "description": "The productId exactly as given."},
+        "title": {"type": "string", "description": "The product title exactly as given."},
+        "price": {"type": "number", "description": "Price in USD as a plain number, e.g. 25.5."},
     }
-    output_type = "string"  
+    output_type = "string"
 
-
-    def __init__(self, client: PayPalClient):
+    def __init__(self, client):
         super().__init__()
         self.client = client
 
-    def forward(self, purchase_units, intent="CAPTURE") -> str:
-        BACKEND_URL = os.environ.get("BACKEND_URL", "localhost:8000")
-
-        RETURN_URL = f"{BACKEND_URL}/checkout/return"
-        CANCEL_URL = f"{BACKEND_URL}/checkout/cancel"
+    def forward(self, product_id: str, title: str, price: float) -> str:
+        backend = os.environ.get("BACKEND_URL", "http://localhost:8000").rstrip("/")
         body = {
-            "intent": intent or "CAPTURE",
-            "purchase_units": purchase_units,
+            "intent": "CAPTURE",
+            "purchase_units": [{
+                "reference_id": product_id,
+                "custom_id": product_id,
+                "description": title[:127],
+                "amount": {"currency_code": "USD", "value": f"{float(price):.2f}"},
+            }],
             "payment_source": {
                 "paypal": {
                     "experience_context": {
-                        "return_url": RETURN_URL,
-                        "cancel_url": CANCEL_URL,
+                        "return_url": f"{backend}/checkout/return",
+                        "cancel_url": f"{backend}/checkout/cancel",
                         "user_action": "PAY_NOW",
                         "shipping_preference": "NO_SHIPPING",
-                        "brand_name": "GhostBuyer",
                     }
                 }
             },
         }
         r = self.client.request("POST", "/v2/checkout/orders", json=body)
+        if not r.ok:
+            print("PAYPAL ERROR:", r.status_code, r.text, flush=True)
+            return json.dumps({"status": "payment_failed",
+                               "message": f"PayPal error {r.status_code}: {r.text}"})
+        data = r.json()
+        approve = next(
+            (l["href"] for l in data.get("links", []) if l["rel"] in ("payer-action", "approve")),
+            None,
+        )
+        return json.dumps({"paypal_order_id": data["id"], "approval_url": approve})
 
+    
 def get_paypal_tools():
     client = PayPalClient()
     return [CreateOrderTool(client)]

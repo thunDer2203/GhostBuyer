@@ -142,73 +142,36 @@ def parse_query(user_query: str) -> ParsedQuery:
 # --------------------------------------------------------------------------
 # Step 2: payment agent (only tool: create_order, called once)
 # --------------------------------------------------------------------------
-
 PAYMENT_INSTRUCTIONS = (
     "You create exactly ONE PayPal order for a product that has already been selected and verified.\n\n"
 
-    "INPUT:\n"
-    "- You will receive productId, title, price, returnUrl and cancelUrl.\n"
-    "- Use the provided title and price exactly as given.\n\n"
+    "INPUT: you receive productId, title and price.\n\n"
 
-    "CREATE_ORDER RULES:\n"
-    "- Call create_order EXACTLY ONCE.\n"
-    "- currencyCode must be the string 'USD'.\n"
-    "- items must be an array containing exactly one item.\n"
-    "- The item must have the following structure:\n"
-    "  {\n"
-    '    "name": "<title>",\n'
-    '    "quantity": 1,\n'
-    '    "itemCost": <price as a number>,\n'
-    '    "itemTotal": <price as a number>\n'
-    "  }\n"
-    "- quantity MUST be a number, never a string.\n"
-    "- itemCost and itemTotal MUST be plain numbers, NOT currency objects.\n"
-    "- itemTotal = itemCost * quantity.\n"
-    "- NEVER include unit_amount, currency_code or sku inside items.\n"
-    "- discount must be 0.\n"
-    "- shippingCost must be 0.\n"
-    "- notes must be None or a string, never an object.\n"
-    "- Use the provided returnUrl and cancelUrl.\n"
-    "- Do not add unnecessary arguments.\n\n"
+    "HOW TO CALL THE TOOL:\n"
+    "- Call create_order exactly once with keyword arguments:\n"
+    "  create_order(product_id=<productId>, title=<title>, price=<price as a number>)\n"
+    "- Pass the values exactly as given. Do not change, round, translate or shorten them.\n"
+    "- Do not pass any other arguments. Return and cancel URLs are handled by the tool.\n\n"
 
-    "STEP 1 - CREATE THE ORDER:\n"
-    "- In the FIRST code block, call create_order and store the result in a variable named order_response.\n"
-    "- In that same block, only print(type(order_response)) and print(order_response).\n"
-    "- Do NOT call final_answer in that block and do NOT parse the response yet.\n"
-    "- The response format is unknown until you print it, so never guess its keys.\n\n"
+    "THE TOOL RETURNS a JSON string.\n"
+    '- Success: {"paypal_order_id": "...", "approval_url": "..."}\n'
+    '- Failure: {"status": "payment_failed", "message": "..."}\n\n'
 
-    "STEP 2 - PARSE THE RESPONSE:\n"
-    "- The create_order response is a JSON string. Do not call .get() on it.\n"
-    "- In the SECOND code block, use the already-stored order_response variable. NEVER call create_order again.\n"
-    "- Parse it with: import json; data = json.loads(order_response)\n"
-    "  (if it is already a dict, use it directly: data = order_response)\n"
-    "- paypal_order_id is data['id'].\n"
-    "- approval_url is the 'href' of the entry in data['links'] whose 'rel' is 'payer-action'\n"
-    "  (fall back to rel 'approve' if 'payer-action' is absent).\n"
-    "- The response does NOT contain keys named paypal_order_id or approval_url.\n"
-    "- Never invent either value. Never use try/except to hide parsing errors or default values to None.\n"
-    "- If either value is missing or empty, print the full response and fix the parsing; do not return nulls.\n\n"
+    "WHAT TO DO:\n"
+    "- Write ONE <code> block:\n"
+    "  <code>\n"
+    "  import json\n"
+    "  result = json.loads(create_order(product_id=..., title=..., price=...))\n"
+    "  print(result)\n"
+    "  final_answer(result)\n"
+    "  </code>\n"
+    "- Pass the parsed dict to final_answer unchanged. Never invent or edit any value.\n"
+    "- Never call create_order a second time, including after a failure. "
+    "Return the failure dict as it is.\n"
+    "- Never call any other tool.\n"
+    "- Every reply must contain a code block opened with <code> and closed with </code>.\n\n"
 
-    "EXECUTION RULES:\n"
-    "- Never retry a create_order call that succeeded (it returned an id).\n"
-    "- Only retry create_order if it raised an error or returned no id, and only after fixing the arguments.\n"
-    "- Never call pay_order or any other tool.\n"
-    "- Creating an order does NOT capture payment.\n"
-    "- Every response must contain a code block opened with <code> and closed with </code>.\n"
-    "  Never reply with only plain text or JSON outside a code block, and never send an empty reply.\n\n"
-
-    "FINAL OUTPUT:\n"
-    "- Call final_answer EXACTLY ONCE, inside a <code> block, after both values are verified non-empty.\n"
-    "- Pass a Python dict as the argument, not a string.\n"
-    "- The answer must contain ONLY one JSON object.\n\n"
-
-    "SUCCESS:\n"
-    '{"paypal_order_id": "<id>", "approval_url": "<url>"}\n\n'
-
-    "FAILURE (only if create_order itself raised an error or returned no id):\n"
-    '{"status": "payment_failed", "message": "<error>"}\n\n'
-
-    "No markdown, no prose, no code fences, no extra keys.\n\n"
+    "FINAL OUTPUT: a single Python dict passed to final_answer, no markdown, no prose, no extra keys.\n\n"
     + UNTRUSTED
 )
 
@@ -219,7 +182,7 @@ def build_payment_agent() -> CodeAgent:
         api_base=API_BASE,
         api_key=os.environ["OLLAMA_API_KEY"],
     )
-    # Expose ONLY create_order: pay_order is excluded in code, not just in the prompt.
+
     tools = get_paypal_tools()
     if not tools:
         raise RuntimeError("PayPal MCP did not expose a create_order tool")
@@ -234,10 +197,6 @@ def build_payment_agent() -> CodeAgent:
         additional_authorized_imports=["json"],
     )
 
-BACKEND_URL = os.environ.get("BACKEND_URL", "localhost:8000")
-
-RETURN_URL = f"{BACKEND_URL}/checkout/return"
-CANCEL_URL = f"{BACKEND_URL}/checkout/cancel"
 
 def create_order_for(item: dict) -> dict:
     """Create a PayPal order for one ranked item. Product fields in the response come from our
@@ -249,11 +208,7 @@ def create_order_for(item: dict) -> dict:
         "productId": pid,
         "title": item["title"],
         "price": item["price"],
-        "returnUrl": RETURN_URL,
-        "cancelUrl": CANCEL_URL,
-        "trustScore": item["trustScore"],
-        "merchantScore": item["merchantScore"],
-    })+"Dont modify any links or product details."
+    })
 )
     try:
         out = _as_dict(build_payment_agent().run(task))
