@@ -4,6 +4,8 @@ import requests
 from smolagents import Tool
 from dotenv import load_dotenv
 
+from GhostBuyer.AI_recommender.products.agents import BACKEND_URL
+
 load_dotenv()
 
 
@@ -21,10 +23,7 @@ class PayPalClient:
         self._expires_at = 0.0
         self._http = requests.Session()
 
-    BACKEND_URL = os.environ.get("BACKEND_URL", "localhost:8000")
 
-    RETURN_URL = f"{BACKEND_URL}/checkout/return"
-    CANCEL_URL = f"{BACKEND_URL}/checkout/cancel"
     def _get_token(self, force=False) -> str:
         if not force and self._token and time.time() < self._expires_at - 60:
             return self._token
@@ -73,21 +72,26 @@ class CreateOrderTool(Tool):
             "nullable": True,
         },
     }
-    output_type = "string"
+    output_type = "string"  
+
 
     def __init__(self, client: PayPalClient):
         super().__init__()
         self.client = client
 
     def forward(self, purchase_units, intent="CAPTURE") -> str:
+        BACKEND_URL = os.environ.get("BACKEND_URL", "localhost:8000")
+
+        RETURN_URL = f"{BACKEND_URL}/checkout/return"
+        CANCEL_URL = f"{BACKEND_URL}/checkout/cancel"
         body = {
             "intent": intent or "CAPTURE",
             "purchase_units": purchase_units,
             "payment_source": {
                 "paypal": {
                     "experience_context": {
-                        "return_url": os.environ["PAYPAL_RETURN_URL"],
-                        "cancel_url": os.environ["PAYPAL_CANCEL_URL"],
+                        "return_url": RETURN_URL,
+                        "cancel_url": CANCEL_URL,
                         "user_action": "PAY_NOW",
                         "shipping_preference": "NO_SHIPPING",
                         "brand_name": "GhostBuyer",
@@ -96,7 +100,6 @@ class CreateOrderTool(Tool):
             },
         }
         r = self.client.request("POST", "/v2/checkout/orders", json=body)
-        # ... rest unchanged
 
 def get_paypal_tools():
     client = PayPalClient()
