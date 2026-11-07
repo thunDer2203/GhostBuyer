@@ -13,6 +13,7 @@ import os
 import re
 from typing import Any, Optional
 from urllib.parse import urlparse
+from functools import lru_cache
 
 from dotenv import load_dotenv
 
@@ -24,7 +25,7 @@ from smolagents import CodeAgent, OpenAIModel
 from smolagents.monitoring import LogLevel
 
 from .retrieval import find_best
-from paypal_mcp.client import PayPalMCPClient
+from paypal_mcp.client import get_paypal_tools
 
 # from phoenix.otel import register
 # from openinference.instrumentation.smolagents import SmolagentsInstrumentor
@@ -211,7 +212,7 @@ PAYMENT_INSTRUCTIONS = (
     + UNTRUSTED
 )
 
-
+@lru_cache(maxsize=1)
 def build_payment_agent() -> CodeAgent:
     model = OpenAIModel(
         model_id=MODEL_ID,
@@ -219,7 +220,7 @@ def build_payment_agent() -> CodeAgent:
         api_key=os.environ["OLLAMA_API_KEY"],
     )
     # Expose ONLY create_order: pay_order is excluded in code, not just in the prompt.
-    tools = [t for t in PayPalMCPClient().get_dynamic_tools() if t.name == "create_order"]
+    tools = get_paypal_tools()
     if not tools:
         raise RuntimeError("PayPal MCP did not expose a create_order tool")
 
