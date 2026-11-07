@@ -4,9 +4,8 @@
 
 Built for the **PayPal Hackathon**. All payments run through PayPal's APIs.
 
-- 🌐 Frontend (Vercel): `<your-vercel-url>`
+- 🌐 Frontend (Vercel): `https://ghostbuyer.vercel.app/`
 - ⚙️ AI backend (Render): https://ghostbuyer.onrender.com
-- 🎥 Demo video: `<link>`
 
 ---
 
@@ -218,8 +217,8 @@ Open http://localhost:3000.
 
 ```
 GhostBuyer/
-├── <frontend-folder>/     # Next.js app: search UI, merchant onboarding form
-├── <backend-folder>/      # FastAPI service: agents, scoring, PayPal order creation
+├── Next_app/     # Next.js app: search UI, merchant onboarding form
+├── AI_Recommender/      # FastAPI service: agents, scoring, PayPal order creation
 └── README.md
 ```
 
@@ -231,6 +230,8 @@ GhostBuyer/
 - Payment capture and post-payment verification that funds reached the intended merchant
 - Scam shield mode: warn users at the point of payment on any site
 - More marketplaces as price sources of truth
+- Proper Implementation of DNS TXT and email otp verification.
+- Domain wise verification
 
 ---
 
