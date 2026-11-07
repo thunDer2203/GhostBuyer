@@ -1,4 +1,3 @@
-
 # API and server
 fastapi
 uvicorn[standard]
@@ -7,14 +6,8 @@ uvicorn[standard]
 openai
 smolagents
 
+# Embeddings (onnx-based, no torch)
 fastembed
-
-# MCP integration
-mcp
-
-# PayPal MCP
-# Include this only if paypal_mcp is an external package.
-# If it is your local project directory, no dependency is needed.
 
 # Data validation
 pydantic
@@ -26,12 +19,3 @@ requests
 # Database and vector search
 psycopg[binary]
 pgvector
-
-# Hugging Face embeddings
-langchain-huggingface
-sentence-transformers
-
-# Phoenix observability and tracing
-arize-phoenix
-openinference-instrumentation-smolagents
-openinference-instrumentation-openai
