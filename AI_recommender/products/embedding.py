@@ -1,9 +1,6 @@
-import os
-import numpy as np
-from huggingface_hub import InferenceClient
+from functools import lru_cache
 from pydantic import BaseModel, Field
 
-_client = InferenceClient(token=os.environ["HF_TOKEN"], timeout=30)
 MODEL_ID = "sentence-transformers/all-MiniLM-L6-v2"
 
 
@@ -20,15 +17,19 @@ class ProductEmbeddingResponse(BaseModel):
     dimensions: int
 
 
+@lru_cache(maxsize=1)
+def _get_model():
+    # Imported and loaded lazily so the server opens its port fast
+    from fastembed import TextEmbedding
+    return TextEmbedding(MODEL_ID, cache_dir="./models")
+
+
 def generate_embedding(text: str) -> list[float]:
-    out = _client.feature_extraction(text, model=MODEL_ID)
-    return np.asarray(out, dtype=float).reshape(-1).tolist()
+    return next(iter(_get_model().embed([text]))).tolist()
 
 
 def generate_embeddings(texts: list[str]) -> list[list[float]]:
-    """Batch version: one API call for many products (use this when seeding)."""
-    out = _client.feature_extraction(texts, model=MODEL_ID)
-    return np.asarray(out, dtype=float).tolist()
+    return [v.tolist() for v in _get_model().embed(texts)]
 
 
 def build_product_search_text(name: str, description: str, category: str | None = None) -> str:
