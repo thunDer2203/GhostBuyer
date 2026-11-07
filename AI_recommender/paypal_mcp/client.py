@@ -2,6 +2,9 @@ import os
 import time
 import requests
 from smolagents import Tool
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 class PayPalClient:
@@ -18,6 +21,10 @@ class PayPalClient:
         self._expires_at = 0.0
         self._http = requests.Session()
 
+    BACKEND_URL = os.environ.get("BACKEND_URL", "localhost:8000")
+
+    RETURN_URL = f"{BACKEND_URL}/checkout/return"
+    CANCEL_URL = f"{BACKEND_URL}/checkout/cancel"
     def _get_token(self, force=False) -> str:
         if not force and self._token and time.time() < self._expires_at - 60:
             return self._token
@@ -73,20 +80,23 @@ class CreateOrderTool(Tool):
         self.client = client
 
     def forward(self, purchase_units, intent="CAPTURE") -> str:
-        r = self.client.request(
-            "POST",
-            "/v2/checkout/orders",
-            json={"intent": intent or "CAPTURE", "purchase_units": purchase_units},
-        )
-        if not r.ok:
-            return f"PayPal error {r.status_code}: {r.text}"
-        data = r.json()
-        approve = next(
-            (l["href"] for l in data.get("links", []) if l["rel"] in ("approve", "payer-action")),
-            None,
-        )
-        return str({"order_id": data["id"], "status": data["status"], "approval_url": approve})
-
+        body = {
+            "intent": intent or "CAPTURE",
+            "purchase_units": purchase_units,
+            "payment_source": {
+                "paypal": {
+                    "experience_context": {
+                        "return_url": os.environ["PAYPAL_RETURN_URL"],
+                        "cancel_url": os.environ["PAYPAL_CANCEL_URL"],
+                        "user_action": "PAY_NOW",
+                        "shipping_preference": "NO_SHIPPING",
+                        "brand_name": "GhostBuyer",
+                    }
+                }
+            },
+        }
+        r = self.client.request("POST", "/v2/checkout/orders", json=body)
+        # ... rest unchanged
 
 def get_paypal_tools():
     client = PayPalClient()
