@@ -4,8 +4,6 @@ import requests
 from smolagents import Tool
 from dotenv import load_dotenv
 
-from GhostBuyer.AI_recommender.products.agents import BACKEND_URL
-
 load_dotenv()
 
 
