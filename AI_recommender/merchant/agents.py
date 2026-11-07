@@ -7,18 +7,18 @@ from smolagents import CodeAgent, LogLevel, OpenAIModel, tool
 
 from .scoring import calculate_metrics, calculate_reliability_score
 
-from phoenix.otel import register
-from openinference.instrumentation.smolagents import SmolagentsInstrumentor
+# from phoenix.otel import register
+# from openinference.instrumentation.smolagents import SmolagentsInstrumentor
 
-# Register Phoenix as the trace destination
-tracer_provider = register(
-    project_name="paypal-hackathon-manager-agent"
-)
+# # Register Phoenix as the trace destination
+# tracer_provider = register(
+#     project_name="paypal-hackathon-manager-agent"
+# )
 
-# Instrument smolagents
-SmolagentsInstrumentor().instrument(
-    tracer_provider=tracer_provider
-)
+# # Instrument smolagents
+# SmolagentsInstrumentor().instrument(
+#     tracer_provider=tracer_provider
+# )
 
 def fetch_json(url: str) -> dict | list:
     import urllib.request

@@ -26,11 +26,11 @@ from smolagents.monitoring import LogLevel
 from .retrieval import find_best
 from paypal_mcp.client import PayPalMCPClient
 
-from phoenix.otel import register
-from openinference.instrumentation.smolagents import SmolagentsInstrumentor
+# from phoenix.otel import register
+# from openinference.instrumentation.smolagents import SmolagentsInstrumentor
 
-tracer_provider = register(project_name="paypal-hackathon-product-agent")
-SmolagentsInstrumentor().instrument(tracer_provider=tracer_provider)
+# tracer_provider = register(project_name="paypal-hackathon-product-agent")
+# SmolagentsInstrumentor().instrument(tracer_provider=tracer_provider)
 
 MODEL_ID = "gpt-oss:120b"
 API_BASE = "https://ollama.com/v1"

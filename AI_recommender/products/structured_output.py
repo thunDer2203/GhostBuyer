@@ -5,17 +5,17 @@ from dotenv import load_dotenv
 from openai import OpenAI
 
 load_dotenv()
-from phoenix.otel import register
-from openinference.instrumentation.openai import OpenAIInstrumentor
+# from phoenix.otel import register
+# from openinference.instrumentation.openai import OpenAIInstrumentor
 
 
-tracer_provider = register(
-    project_name="paypal-hackathon-scoring-job"
-)
+# tracer_provider = register(
+#     project_name="paypal-hackathon-scoring-job"
+# )
 
-OpenAIInstrumentor().instrument(
-    tracer_provider=tracer_provider
-)
+# OpenAIInstrumentor().instrument(
+#     tracer_provider=tracer_provider
+# )
 
 client = OpenAI(
     base_url="https://ollama.com/v1",

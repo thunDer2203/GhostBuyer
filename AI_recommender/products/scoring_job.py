@@ -60,17 +60,17 @@ from .structured_output import generate_structured_assessment
 load_dotenv()
 
 # Phoenix instrumentation
-from phoenix.otel import register
-from openinference.instrumentation.smolagents import SmolagentsInstrumentor
+# from phoenix.otel import register
+# from openinference.instrumentation.smolagents import SmolagentsInstrumentor
 
 
-tracer_provider = register(
-    project_name="paypal-hackathon-scoring-job"
-)
+# tracer_provider = register(
+#     project_name="paypal-hackathon-scoring-job"
+# )
 
-SmolagentsInstrumentor().instrument(
-    tracer_provider=tracer_provider
-)
+# SmolagentsInstrumentor().instrument(
+#     tracer_provider=tracer_provider
+# )
 
 
 # ---------------------------------------------------------------------
